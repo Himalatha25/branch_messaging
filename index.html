@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Branch Messaging App</title>
+    <!-- Bootstrap CSS for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .header h2 {
+            margin: 0;
+            font-size: 1.75rem;
+        }
+        .message-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .message-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .message-card:hover {
+            background-color: #e9ecef;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        .message-body-readonly {
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+        }
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .footer {
+    background-color: #7e8d9d;
+    color: #ffffff;
+    padding: 1rem 0;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.footer a {
+    color: #ffffff;
+    transition: color 0.3s;
+}
+
+.footer a:hover {
+    color: #cce7ff;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Header Section -->
+        <div class="header text-center">
+            <h2><i class="fas fa-envelope"></i> Branch Customer Service Portal</h2>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input type="text" id="search-input" class="form-control" placeholder="Search messages or user ID">
+            <button class="btn btn-primary" id="search-button"><i class="fas fa-search"></i> Search</button>
+            <button class="btn btn-secondary" id="clear-search-button"><i class="fas fa-times"></i> Clear</button>
+        </div>
+
+        <div class="row">
+            <!-- Message List Section -->
+            <div class="col-md-5">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-comments"></i> Customer Messages</h5>
+                    </div>
+                    <div class="card-body message-list">
+                        <ul id="message-list" class="list-group">
+                            <!-- Messages will be dynamically populated here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reply Section -->
+            <div class="col-md-7">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-reply"></i> Selected Message</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="message-body" class="form-label">Message Body:</label>
+                            <textarea id="message-body" class="form-control message-body-readonly" rows="3" readonly></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="canned-messages" class="form-label">Canned Responses:</label>
+                            <select id="canned-messages" class="form-select">
+                                <option value="">Select a canned response...</option>
+                                <!-- Canned messages will be dynamically populated here -->
+                            </select>
+                        </div>
+                        <form id="reply-form">
+                            <input type="hidden" id="message-id">
+                            <div class="mb-3">
+                                <label for="agent-response" class="form-label">Your Response:</label>
+                                <textarea id="agent-response" class="form-control" rows="4" required></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success"><i class="fas fa-paper-plane"></i> Send Response</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Section -->
+<div class="footer mt-4">
+    <div class="container text-center">
+        <p class="mb-2">&copy; 2024 Branch International. All rights reserved.</p>
+        <p>
+            <a href="https://www.branch.com" class="text-white mx-2" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+                <i class="fas fa-globe"></i> Website
+            </a>
+            <a href="https://www.linkedin.com/company/branch-international/" class="text-white mx-2" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+                <i class="fab fa-linkedin"></i> LinkedIn
+            </a>
+            <a href="https://twitter.com/branch" class="text-white mx-2" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+                <i class="fab fa-twitter"></i> Twitter
+            </a>
+        </p>
+    </div>
+</div>
+
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JavaScript to Handle Messages -->
+    <script>
+       document.addEventListener('DOMContentLoaded', function () {
+    const messageList = document.getElementById('message-list');
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    const clearSearchButton = document.getElementById('clear-search-button');
+    const cannedMessagesSelect = document.getElementById('canned-messages');
+    const agentResponse = document.getElementById('agent-response');
+    const apiEndpoint = 'http://localhost:3001/api/messages';
+    const cannedMessagesEndpoint = 'http://localhost:3001/api/canned-messages';
+
+    // Load messages from the API
+    function loadMessages(query = '') {
+        const url = query ? `${apiEndpoint}/search?query=${encodeURIComponent(query)}` : apiEndpoint;
+        fetch(url)
+            .then(response => response.json())
+            .then(messages => {
+                messageList.innerHTML = '';
+                if (messages.length === 0) {
+                    messageList.innerHTML = '<li class="list-group-item">No messages found</li>';
+                    return;
+                }
+                messages.forEach(message => {
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('list-group-item', 'message-card', 'd-flex', 'justify-content-between', 'align-items-center');
+                    if (message.is_urgent) {
+                        listItem.classList.add('bg-warning', 'text-danger');
+                    }
+                    listItem.innerHTML = `
+                        <div>
+                            <strong>User ${message.user_id}</strong><br>
+                            <small>${new Date(message.timestamp).toLocaleString()}</small>
+                        </div>
+                        <i class="fas fa-arrow-right"></i>
+                    `;
+                    listItem.addEventListener('click', () => loadMessageDetails(message));
+                    messageList.appendChild(listItem);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading messages:', error);
+                messageList.innerHTML = '<li class="list-group-item text-danger">Error loading messages. Please try again later.</li>';
+            });
+    }
+
+    // Load the details of a selected message
+    function loadMessageDetails(message) {
+        document.getElementById('message-body').value = message.message_body;
+        document.getElementById('message-id').value = message.id;
+    }
+
+    // Load canned responses into the dropdown
+    function loadCannedMessages() {
+        fetch(cannedMessagesEndpoint)
+            .then(response => response.json())
+            .then(cannedMessages => {
+                cannedMessagesSelect.innerHTML = '<option value="">Select a canned response...</option>';
+                cannedMessages.forEach(canned => {
+                    const option = document.createElement('option');
+                    option.value = canned.message_body;
+                    option.textContent = canned.message_body;
+                    cannedMessagesSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading canned messages:', error);
+            });
+    }
+
+    // Automatically populate the response field when a canned message is selected
+    cannedMessagesSelect.addEventListener('change', () => {
+        const selectedCannedMessage = cannedMessagesSelect.value;
+        if (selectedCannedMessage) {
+            agentResponse.value = selectedCannedMessage;
+        }
+    });
+
+    // Handle the reply form submission
+    document.getElementById('reply-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const messageId = document.getElementById('message-id').value;
+        const response = agentResponse.value;
+
+        if (!messageId) {
+            alert('Please select a message first!');
+            return;
+        }
+
+        fetch(`${apiEndpoint}/${messageId}/respond`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ response_body: response }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert('Response sent successfully!');
+                loadMessages(); // Reload the messages after sending a response
+            })
+            .catch(error => {
+                console.error('Error sending response:', error);
+            });
+    });
+
+    // Handle search button click
+    searchButton.addEventListener('click', () => {
+        const query = searchInput.value.trim();
+        loadMessages(query);
+    });
+
+    // Handle clear search button click
+    clearSearchButton.addEventListener('click', () => {
+        searchInput.value = '';
+        loadMessages(); // Reload all messages without any query
+    });
+
+    // Load all messages and canned messages when the page is loaded
+    loadMessages();
+    loadCannedMessages();
+});
+</script>
+</body>
+</html>
