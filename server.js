@@ -12,8 +12,8 @@ app.use(cors());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'hima', // Replace with your MySQL password
-    database: 'branch_messaging' // Replace with your database name
+    password: 'hima', 
+    database: 'branch_messaging'
 });
 
 // Connect to MySQL
